@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(MyApp());
@@ -15,6 +16,7 @@ class MyApp extends StatelessWidget {
   }
 }
 
+
 class TodoListScreen extends StatefulWidget {
   @override
   _TodoListScreenState createState() => _TodoListScreenState();
@@ -25,6 +27,30 @@ class _TodoListScreenState extends State<TodoListScreen> {
   List<String> tasks = [];
   // Controlador de texto
   final TextEditingController _controller = TextEditingController();
+  String _dato = 'Sin Dato';
+
+@override
+void initState(){
+  super.initState();
+  _cargarDato();
+}
+
+Future<void> _guardarDato(String valor) async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  await prefs.setString('miDato',tasks);
+  setState((){
+    _dato = valor;
+  });
+}
+
+
+Future<void> _cargarDato() async{
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  setState((){
+    _dato = prefs.getStringList('tasks') ?? [];
+  });
+}
+
 
   void _addTask() {
     if (_controller.text.isNotEmpty) {
@@ -54,7 +80,7 @@ class _TodoListScreenState extends State<TodoListScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Confirmar eliminación'),
-          content: const Text("¿Estás seguro de que quieres eliminar '${tasks[index]}'?"),
+          content: const Text("¿Estás seguro de que quieres eliminar?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -103,7 +129,10 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 ),
                 SizedBox(width: 10),
                 ElevatedButton(
-                  onPressed: () => _addTask(),
+                  onPressed: (){ 
+                    _addTask(),
+                    _guardarDato()
+                  },
                   child: Text('Agregar'),
                 ),
               ],
