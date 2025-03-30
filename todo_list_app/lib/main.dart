@@ -22,9 +22,15 @@ class TodoListScreen extends StatefulWidget {
   _TodoListScreenState createState() => _TodoListScreenState();
 }
 
+class Task{
+    String texto;
+    bool completada;
+    Task(this.texto, {this.completada = false});
+  }
+
 class _TodoListScreenState extends State<TodoListScreen> {
   // para almacenar la lista de tareas
-  List<String> tasks = [];
+  List<Task> tasks = [];
   // Controlador de texto
   final TextEditingController _controller = TextEditingController();
   String _dato = 'Sin Dato';
@@ -35,19 +41,18 @@ void initState(){
   _cargarDato();
 }
 
-Future<void> _guardarDato(String valor) async{
+Future<void> _guardarDato() async{
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  await prefs.setString('miDato',tasks);
-  setState((){
-    _dato = valor;
-  });
+  await prefs.setStringList('tasks', tasks.map((tasks) => tasks.texto).toList());
+  }
 }
 
 
 Future<void> _cargarDato() async{
   SharedPreferences prefs = await SharedPreferences.getInstance();
   setState((){
-    _dato = prefs.getStringList('tasks') ?? [];
+    List<String> loadedTasks = prefs.getStringList('tasks') ?? [];
+    tasks = loadedTasks.map((texto) => Task(texto)).toList();
   });
 }
 
@@ -55,9 +60,10 @@ Future<void> _cargarDato() async{
   void _addTask() {
     if (_controller.text.isNotEmpty) {
       setState(() {
-        tasks.add(_controller.text); // agrega la tarea a la lista
+        tasks.add(Task(_controller.text)); // agrega la tarea a la lista
         _controller.clear(); // Limpia el campo de texto
       });
+      _guardarDato();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text('Tarea agregada'),
@@ -130,8 +136,8 @@ Future<void> _cargarDato() async{
                 SizedBox(width: 10),
                 ElevatedButton(
                   onPressed: (){ 
-                    _addTask(),
-                    _guardarDato()
+                    _addTask();
+                    _guardarDato();
                   },
                   child: Text('Agregar'),
                 ),
@@ -147,7 +153,7 @@ Future<void> _cargarDato() async{
                         itemCount: tasks.length,
                         itemBuilder: (context, index) {
                           return ListTile(
-                            title: Text(tasks[index]),
+                            title: Text(tasks[index].text),
                             trailing: IconButton(
                               onPressed: () => _eraseTask(index),
                               icon: const Icon(Icons.delete, color: Colors.red,),
